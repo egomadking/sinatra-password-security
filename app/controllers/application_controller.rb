@@ -17,15 +17,34 @@ class ApplicationController < Sinatra::Base
 	end
 
 	post "/signup" do
-		#your code here!
+		user = User.new(:username => params[:username], :password => params[:password])
+		#uses has_secure_password as piece of magic in User to ensure the user actually
+		#enters a password. Without a password, AR will not be able to save the user.
+		#shotgun shows a begin transaction...rollback transaction
+		if user.save
+			redirect to "/login"
+		else
+			redirect to "/failure"
+		end
 	end
 
 	get "/login" do
 		erb :login
 	end
 
+	#has_secure_password adds #authenticate to Users
+	# 1. takes string as arg
+	# 2. turns it into a salted, hashed version
+	# 3. copares this salted hash to the hashed password (?password_digest?)
+	# 4. if matches, returns user instance ELSE false
 	post "/login" do
-		#your code here!
+		user = User.find_by(:username => params[:username])
+		if user && user.authenticate(params[:password])
+			session[:user_id] = user.id
+			redirect to "/success"
+		else
+			redirect to "/failure"
+		end
 	end
 
 	get "/success" do
